@@ -1,0 +1,10 @@
+{
+    "name": "cpp-homework-04",
+    "build": {"dockerfile": "Dockerfile"},
+    "customizations": {
+        "vscode": {
+            "extensions": ["ms-vscode.cpptools", "ms-vscode.cmake-tools"]
+        }
+    }
+
+}
