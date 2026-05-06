@@ -42,14 +42,24 @@ long parse_long(const char* text) {
     char* end = nullptr;
     const long value = std::strtol(text, &end, 10);
 
-    if (end == text) {
-        std::abort();
+    if (end == text || *end !='\0') {
+        std::cerr << "error: invalid input: expected double but got" << text << "\n";
     }
 
     return value;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+//second error wase about "not_a_number" when parsing double, so check for invalid number input or trash input like "13aaa" was added
+///////////////////////////////////////////////////////////////////////////////////////////
 int parse_int(const char* text) {
+    char* end = nullptr;
+    const long value = std::strtol(text, &end, 10);
+
+    if (end == text || *end !='\0') {
+        std::cerr << "error: invalid input: expected double but got" << text << "\n";
+    }
+
     return static_cast<int>(parse_long(text));
 }
 
@@ -57,8 +67,8 @@ double parse_double(const char* text) {
     char* end = nullptr;
     const double value = std::strtod(text, &end);
 
-    if (end == text) {
-        std::abort();
+    if (end == text || *end !='\0') {
+        std::cerr << "error: invalid input: expected double but got" << text << "\n";
     }
 
     return value;
@@ -70,6 +80,15 @@ Frame parse_frame(char line[]) {
     (void)field_count;
 
     Frame frame{};
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    //first error was here
+    /////////////////////////////////////////////////////////////////////////////////////
+    if(field_count != EXPECTED_FIELD_COUNT){
+        std::cerr << "error: invalid frame: expected 7 fields but got less";
+        exit(1);
+    }
+
     frame.timestamp_ms = parse_long(fields[0]);
     frame.seq = parse_int(fields[1]);
     frame.voltage_v = parse_double(fields[2]);
@@ -80,17 +99,34 @@ Frame parse_frame(char line[]) {
     return frame;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//the third problem with timedelta was here and about division by zero
+////////////////////////////////////////////////////////////////////////////////////////
 double compute_frame_rate_hz(const Frame frames[], int frame_count) {
     const long elapsed_ms = frames[frame_count - 1].timestamp_ms - frames[0].timestamp_ms;
+
+    if(elapsed_ms <=0){
+        std::cerr << "error: invalid timestamp delta, check for problems with timestamps estimation or enumeration\n";
+        exit(1);
+    }
 
     return static_cast<double>((frame_count - 1) * 1000 / elapsed_ms);
 }
 
+
+///////////////////////////////////////////////////////////////////////
+//the last problem was about empty file, so frame_count was zero, so we were getting division by zero
+///////////////////////////////////////////////////////////////////////////////////////////
 int read_frames(const char* path, Frame frames[], int max_frames) {
     std::ifstream input{path};
     if (!input) {
         std::cerr << "error: failed to open input file: " << path << '\n';
         return 0;
+    }
+
+    if(input.peek() == std::ifstream::traits_type::eof()){
+        std::cerr << "input file is empty, nothing to read here, so we have frame_count=0 and hence division by zero";
+        exit(1);
     }
 
     int frame_count = 0;
@@ -105,6 +141,14 @@ int read_frames(const char* path, Frame frames[], int max_frames) {
             frames[frame_count] = parse_frame(line);
             ++frame_count;
         }
+    }
+
+    //second check for frame_count without peek, because peek can get empty lines so it won't get eof at the beginning,
+    //but the input is empty anyway
+
+    if (frame_count == 0) {
+        std::cerr << "error: input file is empty and got no frames, or it might contain empty rows";
+        exit(1);
     }
 
     return frame_count;
