@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake: configure (ucrt64-debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--preset", "ucrt64-debug"],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "CMake: build (ucrt64-debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-ucrt64-debug"],
+      "problemMatcher": "$gcc",
+      "group": { "kind": "build", "isDefault": true },
+      "dependsOn": ["CMake: configure (ucrt64-debug)"]
+    }
+  ]
+}
