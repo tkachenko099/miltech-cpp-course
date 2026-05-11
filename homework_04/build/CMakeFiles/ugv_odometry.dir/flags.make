@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -std=gnu++23
+CXX_FLAGS = -std=c++20 -Wall -Wextra -pedantic
 
