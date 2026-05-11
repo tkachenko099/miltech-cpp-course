@@ -1,21 +1,15 @@
-cmake_minimum_required(VERSION 3.25)
+add_library(ballistics src/ballistics.cpp)
 
-project(Homework1
-    VERSION 0.1.0
-    LANGUAGES CXX
-)
+target_include_directories(ballistics PUBLIC include)
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+add_executable(ballistics_cli src/main.cpp)
 
-add_executable(Homework1 src/main.cpp)
+target_link_libraries(ballistics_cli PRIVATE ballistics)
 
-target_compile_options(Homework1 PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
+add_executable(ballistics_tests tests/ballistics_tests.cpp)
 
-set_target_properties(Homework1 PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-)
+target_link_libraries(ballistics_tests PRIVATE ballistics GTest::gtest_main)
+
+include(GoogleTest)
+
+gtest_discover_tests(ballistics_tests)
