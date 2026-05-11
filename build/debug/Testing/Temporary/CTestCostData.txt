@@ -1,5 +1,0 @@
-Ballistics.ComputesKnownDropPoint 1 0.00351187
-Ballistics.ThrowsOnUnknownAmmoType 1 0.00348017
-Ballistics.ThrowsOnZeroAltitude 1 0.0024194
-Ballistics.GlidingAmmoProducesPositiveFlightTime 1 0.00411848
----
