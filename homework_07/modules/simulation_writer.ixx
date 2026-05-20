@@ -1,11 +1,13 @@
+module;
+
+#include "json.hpp"
+
+#include <fstream>
+#include <vector>
+
 export module simulation_writer;
 
 import mission_types;
-
-import <fstream>;
-import <vector>;
-
-#include "json.hpp"
 
 using json = nlohmann::json;
 

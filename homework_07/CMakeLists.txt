@@ -15,11 +15,12 @@ target_sources(homework_07
         FILE_SET cxx_modules TYPE CXX_MODULES FILES
             modules/mission_types.ixx
             modules/interfaces.ixx
-            modules/json_target_provider.ixx
             modules/file_config_loader.ixx
+            modules/json_target_provider.ixx
             modules/analytical_solver.ixx
             modules/factory.ixx
             modules/mission_processor.ixx
+            modules/simulation_writer.ixx
 )
 
 target_include_directories(homework_07 PRIVATE external)

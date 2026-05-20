@@ -1,86 +1,88 @@
+module;
+
+#include "json.hpp"
+
+#include <cmath>
+#include <fstream>
+#include <vector>
+
 export module json_target_provider;
-        }
 
-        const Coord p1 = interpolate(index, time);
-        const Coord p2 = interpolate(index, time + dt);
+import interfaces;
+import mission_types;
 
-        return TargetState{
-            .pos = p1,
-            .vel = (p2 - p1) / dt
-        };
-    }
+using json=nlohmann::json;
 
+export class JsonTargetProvider final
+    : public ITargetProvider
+{
 private:
-    std::vector<std::vector<Coord>> targets_{};
+
+    std::vector<std::vector<Coord>>
+        targets_;
+
     int timeSteps_{};
     float arrayTimeStep_{1.0f};
 
-    void load(const char* filename)
-    {
-        std::ifstream fin(filename);
-        if (!fin.is_open())
-        {
-            throw std::runtime_error("cannot open targets file");
-        }
-
-        json j;
-        fin >> j;
-
-        const int targetCount = j["targetCount"];
-        timeSteps_ = j["timeSteps"];
-
-        if (targetCount <= 0 || timeSteps_ <= 0)
-        {
-            throw std::runtime_error("invalid target file");
-        }
-
-        if (j.contains("targetArrayTimeStep"))
-        {
-            arrayTimeStep_ = j["targetArrayTimeStep"];
-        }
-
-        targets_.assign(
-            static_cast<std::size_t>(targetCount),
-            std::vector<Coord>(static_cast<std::size_t>(timeSteps_))
-        );
-
-        for (int i = 0; i < targetCount; ++i)
-        {
-            for (int k = 0; k < timeSteps_; ++k)
-            {
-                targets_[i][k].x = j["targets"][i]["positions"][k]["x"];
-                targets_[i][k].y = j["targets"][i]["positions"][k]["y"];
-            }
-        }
-    }
-
     Coord interpolate(
         int targetIndex,
-        float time
+        float t
     ) const
     {
-        if (timeSteps_ <= 0)
-        {
-            throw std::runtime_error("no target time steps");
-        }
+        int idx=
+            static_cast<int>(
+                std::floor(
+                    t/arrayTimeStep_
+                )
+            )%timeSteps_;
 
-        int idx = static_cast<int>(std::floor(time / arrayTimeStep_)) % timeSteps_;
-        if (idx < 0)
-        {
-            idx += timeSteps_;
-        }
+        int next=
+            (idx+1)%timeSteps_;
 
-        const int next = (idx + 1) % timeSteps_;
+        Coord a=
+            targets_[targetIndex][idx];
 
-        const float baseTime = std::floor(time / arrayTimeStep_) * arrayTimeStep_;
-        const float frac = (time - baseTime) / arrayTimeStep_;
+        Coord b=
+            targets_[targetIndex][next];
 
-        const Coord a = targets_[targetIndex][idx];
-        const Coord b = targets_[targetIndex][next];
+        return a+(b-a)*0.5f;
+    }
+
+public:
+
+    explicit JsonTargetProvider(
+        const char* filename
+    )
+    {
+    }
+
+    int getTargetCount()
+    const override
+    {
+        return targets_.size();
+    }
+
+    TargetState getTarget(
+        int index,
+        float time,
+        float dt
+    ) const override
+    {
+        Coord p1=
+            interpolate(
+                index,
+                time
+            );
+
+        Coord p2=
+            interpolate(
+                index,
+                time+dt
+            );
 
         return {
-            a.x + (b.x - a.x) * frac,
-            a.y + (b.y - a.y) * frac
+            p1,
+            (p2-p1)/dt
         };
     }
 };

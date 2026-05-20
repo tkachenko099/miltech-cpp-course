@@ -1,28 +1,51 @@
+module;
+
+#include <cmath>
+#include <vector>
+
 export module mission_processor;
 
 import interfaces;
 import mission_types;
 
-import <cmath>;
-import <stdexcept>;
-import <vector>;
-
 export class MissionProcessor
 {
+private:
+
+    ITargetProvider*
+        targets_{};
+
+    IBallisticSolver*
+        solver_{};
+
+    IConfigLoader*
+        loader_{};
+
+    Drone drone_{};
+
+    DroneConfig cfg_{};
+
+    AmmoParams ammo_{};
+
+    int currentIdx_{};
+
+    float currentTime_{};
+
+    std::vector<SimStep>
+        steps_;
+
 public:
+
     MissionProcessor(
         ITargetProvider* targets,
         IBallisticSolver* solver,
         IConfigLoader* loader
     )
-        : targets_{targets},
-          solver_{solver},
-          loader_{loader}
+        :
+        targets_(targets),
+        solver_(solver),
+        loader_(loader)
     {
-        if (targets_ == nullptr || solver_ == nullptr || loader_ == nullptr)
-        {
-            throw std::runtime_error("MissionProcessor dependency is null");
-        }
     }
 
     void init(
@@ -30,44 +53,64 @@ public:
         const char* ammoPath
     )
     {
-        loader_->load(configPath, ammoPath);
-        cfg_ = loader_->getConfig();
-        ammo_ = loader_->getAmmoParams();
-        drone_ = initDrone(cfg_);
-        currentIdx_ = 0;
-        currentTime_ = 0.0f;
+        loader_->load(
+            configPath,
+            ammoPath
+        );
+
+        cfg_=
+            loader_->getConfig();
+
+        ammo_=
+            loader_->getAmmoParams();
+
+        currentIdx_=0;
+        currentTime_=0;
         steps_.clear();
     }
 
     bool hasNext() const
     {
-        return currentIdx_ < targets_->getTargetCount();
+        return
+            currentIdx_
+            <
+            targets_->getTargetCount();
     }
 
     DropPoint step()
     {
-        if (!hasNext())
-        {
-            throw std::runtime_error("no more targets");
-        }
+        TargetState target=
+            targets_->getTarget(
+                currentIdx_,
+                currentTime_,
+                cfg_.simTimeStep
+            );
 
-        TargetState target = targets_->getTarget(
-            currentIdx_,
-            currentTime_,
-            cfg_.simTimeStep
-        );
+        DropPoint result=
+            solver_->solve(
+                drone_.pos,
+                cfg_.altitude,
+                target.pos,
+                cfg_.attackSpeed,
+                cfg_.accelPath,
+                ammo_
+            );
 
-        DropPoint result = solver_->solve(
-            drone_.pos,
-            drone_.z,
-            target.pos,
-            drone_.attackSpeed,
-            cfg_.accelPath,
-            ammo_
-        );
+        ++currentIdx_;
 
-        result.targetIndex = currentIdx_;
+        return result;
+    }
 
-        if (!result.valid)
-        {
+    void reset()
+    {
+        currentIdx_=0;
+        currentTime_=0;
+    }
+
+    void changeSolver(
+        IBallisticSolver* solver
+    )
+    {
+        solver_=solver;
+    }
 };

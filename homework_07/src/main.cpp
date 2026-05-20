@@ -1,9 +1,10 @@
+#include <exception>
+#include <iostream>
+
+import interfaces;
+import mission_types;
 import factory;
 import mission_processor;
-import simulation_writer;
-
-import <exception>;
-import <iostream>;
 
 int main()
 {
@@ -50,11 +51,6 @@ int main()
                 << result.dropPoint.y
                 << ")\n";
         }
-
-        writeSimulationJson(
-            "simulation.json",
-            mission.getSteps()
-        );
 
         delete solver;
         delete provider;
