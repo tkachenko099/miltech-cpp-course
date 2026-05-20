@@ -63,40 +63,46 @@ int parse_int(const char* text) {
     return static_cast<int>(parse_long(text));
 }
 
-double parse_double(const char* text) {
+bool parse_double(const std::string& text, double& value) {
     char* end = nullptr;
-    const double value = std::strtod(text, &end);
+    value = std::strtod(text.c_str(), &end);
 
-    if (end == text || *end !='\0') {
-        std::cerr << "error: invalid input: expected double but got" << text << "\n";
+    if (end == text.c_str() || *end != '\0') {
+        return false;
     }
 
-    return value;
+    return true;
 }
 
-Frame parse_frame(char line[]) {
+bool parse_frame(char line[], Frame& frame)
+{
     char* fields[EXPECTED_FIELD_COUNT] = {};
-    const int field_count = split_line(line, fields, EXPECTED_FIELD_COUNT);
-    (void)field_count;
+    const int field_count =
+        split_line(line, fields, EXPECTED_FIELD_COUNT);
 
-    Frame frame{};
+    if (field_count != EXPECTED_FIELD_COUNT)
+    {
+        std::cerr
+            << "error: invalid frame: expected 7 fields\n";
 
-    /////////////////////////////////////////////////////////////////////////////////////
-    //first error was here
-    /////////////////////////////////////////////////////////////////////////////////////
-    if(field_count != EXPECTED_FIELD_COUNT){
-        std::cerr << "error: invalid frame: expected 7 fields but got less";
-        exit(1);
+        return false;
     }
 
     frame.timestamp_ms = parse_long(fields[0]);
     frame.seq = parse_int(fields[1]);
-    frame.voltage_v = parse_double(fields[2]);
-    frame.current_a = parse_double(fields[3]);
-    frame.temperature_c = parse_double(fields[4]);
+
+    if (!parse_double(fields[2], frame.voltage_v) ||
+        !parse_double(fields[3], frame.current_a) ||
+        !parse_double(fields[4], frame.temperature_c))
+    {
+        std::cerr << "error: invalid number\n";
+        return false;
+    }
+
     frame.gps_fix = parse_int(fields[5]);
     frame.satellites = parse_int(fields[6]);
-    return frame;
+
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +113,7 @@ double compute_frame_rate_hz(const Frame frames[], int frame_count) {
 
     if(elapsed_ms <=0){
         std::cerr << "error: invalid timestamp delta, check for problems with timestamps estimation or enumeration\n";
-        exit(1);
+        return -1;
     }
 
     return static_cast<double>((frame_count - 1) * 1000 / elapsed_ms);
@@ -120,13 +126,13 @@ double compute_frame_rate_hz(const Frame frames[], int frame_count) {
 int read_frames(const char* path, Frame frames[], int max_frames) {
     std::ifstream input{path};
     if (!input) {
-        std::cerr << "error: failed to open input file: " << path << '\n';
-        return 0;
-    }
+    std::cerr << "error: failed to open input file: " << path << '\n';
+    return -1;
+}
 
     if(input.peek() == std::ifstream::traits_type::eof()){
         std::cerr << "input file is empty, nothing to read here, so we have frame_count=0 and hence division by zero";
-        exit(1);
+        return -1;
     }
 
     int frame_count = 0;
@@ -138,9 +144,23 @@ int read_frames(const char* path, Frame frames[], int max_frames) {
         }
 
         if (frame_count < max_frames) {
-            frames[frame_count] = parse_frame(line);
-            ++frame_count;
-        }
+            Frame frame{};
+
+                if (!parse_frame(line, frame))
+                {
+                    return -1;
+                }
+
+                if (frame_count > 0 &&
+                    frame.timestamp_ms <= frames[frame_count - 1].timestamp_ms)
+                {
+                    std::cerr << "error: invalid timestamp delta\n";
+                    return -1;
+                }
+
+                frames[frame_count] = frame;
+                ++frame_count;
+                        }
     }
 
     //second check for frame_count without peek, because peek can get empty lines so it won't get eof at the beginning,
@@ -148,7 +168,7 @@ int read_frames(const char* path, Frame frames[], int max_frames) {
 
     if (frame_count == 0) {
         std::cerr << "error: input file is empty and got no frames, or it might contain empty rows";
-        exit(1);
+        return -1;
     }
 
     return frame_count;
