@@ -1,41 +1,34 @@
 #include "MissionProcessor.hpp"
-
 #include "Types.hpp"
-
 #include "config/ComponentFactory.hpp"
-
-#include "interfaces/IBallisticSolver.hpp"
-#include "interfaces/IConfigLoader.hpp"
-#include "interfaces/ITargetProvider.hpp"
 
 #include <exception>
 #include <iostream>
 
 int main()
 {
-    IConfigLoader* loader = nullptr;
-    ITargetProvider* provider = nullptr;
-    IBallisticSolver* solver = nullptr;
-
     try
     {
-        loader = createLoader(
-            LoaderType::File
-        );
+        auto loader =
+            createLoader(
+                LoaderType::File
+            );
 
-        provider = createProvider(
-            ProviderType::Json,
-            "data/targets.json"
-        );
+        auto provider =
+            createProvider(
+                ProviderType::Json,
+                "data/targets.json"
+            );
 
-        solver = createSolver(
-            SolverType::Analytical
-        );
+        auto solver =
+            createSolver(
+                SolverType::Analytical
+            );
 
         MissionProcessor mission{
-            provider,
-            solver,
-            loader
+            *provider,
+            *solver,
+            *loader
         };
 
         mission.init(
@@ -74,10 +67,6 @@ int main()
                 << '\n';
         }
 
-        delete solver;
-        delete provider;
-        delete loader;
-
         return 0;
     }
     catch (const std::exception& ex)
@@ -86,10 +75,6 @@ int main()
             << "error: "
             << ex.what()
             << '\n';
-
-        delete solver;
-        delete provider;
-        delete loader;
 
         return 1;
     }

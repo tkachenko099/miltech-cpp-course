@@ -4,24 +4,23 @@
 #include "providers/JsonTargetProvider.hpp"
 #include "solvers/AnalyticalSolver.hpp"
 
+#include <memory>
 #include <stdexcept>
 
-IBallisticSolver* createSolver(
+std::unique_ptr<IBallisticSolver> createSolver(
     SolverType type
 )
 {
     switch (type)
     {
         case SolverType::Analytical:
-            return new AnalyticalSolver{};
+            return std::make_unique<AnalyticalSolver>();
     }
 
-    throw std::runtime_error(
-        "unknown solver type"
-    );
+    throw std::runtime_error("unknown solver type");
 }
 
-ITargetProvider* createProvider(
+std::unique_ptr<ITargetProvider> createProvider(
     ProviderType type,
     const std::string& param
 )
@@ -29,27 +28,21 @@ ITargetProvider* createProvider(
     switch (type)
     {
         case ProviderType::Json:
-            return new JsonTargetProvider{
-                param
-            };
+            return std::make_unique<JsonTargetProvider>(param);
     }
 
-    throw std::runtime_error(
-        "unknown provider type"
-    );
+    throw std::runtime_error("unknown provider type");
 }
 
-IConfigLoader* createLoader(
+std::unique_ptr<IConfigLoader> createLoader(
     LoaderType type
 )
 {
     switch (type)
     {
         case LoaderType::File:
-            return new FileConfigLoader{};
+            return std::make_unique<FileConfigLoader>();
     }
 
-    throw std::runtime_error(
-        "unknown loader type"
-    );
+    throw std::runtime_error("unknown loader type");
 }

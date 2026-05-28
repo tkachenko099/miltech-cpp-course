@@ -4,6 +4,7 @@
 #include "interfaces/IConfigLoader.hpp"
 #include "interfaces/ITargetProvider.hpp"
 
+#include <memory>
 #include <string>
 
 enum class SolverType
@@ -21,15 +22,15 @@ enum class LoaderType
     File
 };
 
-IBallisticSolver* createSolver(
+std::unique_ptr<IBallisticSolver> createSolver(
     SolverType type
 );
 
-ITargetProvider* createProvider(
+std::unique_ptr<ITargetProvider> createProvider(
     ProviderType type,
     const std::string& param
 );
 
-IConfigLoader* createLoader(
+std::unique_ptr<IConfigLoader> createLoader(
     LoaderType type
 );

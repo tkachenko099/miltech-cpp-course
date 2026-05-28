@@ -11,9 +11,9 @@ class MissionProcessor
 {
 public:
     MissionProcessor(
-        ITargetProvider* targets,
-        IBallisticSolver* solver,
-        IConfigLoader* loader
+        ITargetProvider& targets,
+        IBallisticSolver& solver,
+        IConfigLoader& loader
     );
 
     void init(
@@ -28,7 +28,7 @@ public:
     void reset();
 
     void changeSolver(
-        IBallisticSolver* solver
+        IBallisticSolver& solver
     );
 
     const std::vector<SimStep>& getSteps() const;
@@ -51,9 +51,9 @@ private:
     );
 
 private:
-    ITargetProvider* targets_{};
+    ITargetProvider& targets_;
     IBallisticSolver* solver_{};
-    IConfigLoader* loader_{};
+    IConfigLoader& loader_;
 
     Drone drone_{};
     DroneConfig cfg_{};
