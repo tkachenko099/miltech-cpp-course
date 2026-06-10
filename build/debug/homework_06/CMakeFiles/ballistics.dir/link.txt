@@ -1,0 +1,2 @@
+/usr/bin/ar qc libballistics.a CMakeFiles/ballistics.dir/src/ballistics.cpp.o
+/usr/bin/ranlib libballistics.a

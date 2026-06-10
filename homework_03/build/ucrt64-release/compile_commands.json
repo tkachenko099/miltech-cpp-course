@@ -1,0 +1,8 @@
+[
+{
+  "directory": "C:/Programming Projects/C++ Projects/Homework3/build/ucrt64-release",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe -I\"C:/Programming Projects/C++ Projects/Homework3/include\" -O3 -DNDEBUG -std=c++23 -Wall -Wextra -Wpedantic -o CMakeFiles\\Homework3.dir\\src\\main.cpp.obj -c \"C:\\Programming Projects\\C++ Projects\\Homework3\\src\\main.cpp\"",
+  "file": "C:\\Programming Projects\\C++ Projects\\Homework3\\src\\main.cpp",
+  "output": "CMakeFiles\\Homework3.dir\\src\\main.cpp.obj"
+}
+]
