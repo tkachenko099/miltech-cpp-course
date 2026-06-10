@@ -1,3 +1,0 @@
-C:/Programming Projects/C++ Projects/Homework1/build/ucrt64-debug/CMakeFiles/Homework1.dir
-C:/Programming Projects/C++ Projects/Homework1/build/ucrt64-debug/CMakeFiles/edit_cache.dir
-C:/Programming Projects/C++ Projects/Homework1/build/ucrt64-debug/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/ballistics_cli.dir/src/main.cpp.o -o ballistics_cli  libballistics.a 
