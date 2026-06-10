@@ -4,16 +4,19 @@
 #include "interfaces/IBallisticSolver.hpp"
 #include "interfaces/IConfigLoader.hpp"
 #include "interfaces/ITargetProvider.hpp"
+#include "interfaces/IDroneState.hpp"
 
+#include <memory>
+#include <string>
 #include <vector>
 
 class MissionProcessor
 {
 public:
     MissionProcessor(
-        ITargetProvider& targets,
-        IBallisticSolver& solver,
-        IConfigLoader& loader
+        std::unique_ptr<ITargetProvider> targets,
+        std::unique_ptr<IBallisticSolver> solver,
+        std::unique_ptr<IConfigLoader> loader
     );
 
     void init(
@@ -28,34 +31,24 @@ public:
     void reset();
 
     void changeSolver(
-        IBallisticSolver& solver
+        std::unique_ptr<IBallisticSolver> solver
     );
 
     const std::vector<SimStep>& getSteps() const;
 
 private:
-    static Drone initDrone(
-        const DroneConfig& cfg
-    );
-
-    static float normalizeAngle(
-        float angle
-    );
-
-    void updateDrone(
-        const DropPoint& result
-    );
-
     void saveStep(
         const DropPoint& result
     );
 
 private:
-    ITargetProvider& targets_;
-    IBallisticSolver* solver_{};
-    IConfigLoader& loader_;
+    std::unique_ptr<ITargetProvider> targets_;
+    std::unique_ptr<IBallisticSolver> solver_;
+    std::unique_ptr<IConfigLoader> loader_;
+    std::unique_ptr<IDroneState> droneState_;
 
-    Drone drone_{};
+    DroneContext droneCtx_{};
+
     DroneConfig cfg_{};
     AmmoParams ammo_{};
 

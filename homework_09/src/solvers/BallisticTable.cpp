@@ -1,4 +1,4 @@
-#include "solvers/BallisticTable.hpp"
+#include "BallisticTable.hpp"
 
 #include <algorithm>
 #include <fstream>

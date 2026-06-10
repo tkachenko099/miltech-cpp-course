@@ -25,20 +25,8 @@ enum class LoaderType
 
 std::unique_ptr<IBallisticSolver> createSolver(
     SolverType type,
-    const std::string& param
-)
-{
-    switch (type)
-    {
-        case SolverType::Analytical:
-            return std::make_unique<AnalyticalSolver>();
-
-        case SolverType::Table:
-            return std::make_unique<TableSolver>(param);
-    }
-
-    throw std::runtime_error("unknown solver type");
-}
+    const std::string& param = {}
+);
 
 std::unique_ptr<ITargetProvider> createProvider(
     ProviderType type,

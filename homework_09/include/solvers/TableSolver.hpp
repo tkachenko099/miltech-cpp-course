@@ -2,7 +2,7 @@
 
 #include "Types.hpp"
 #include "interfaces/IBallisticSolver.hpp"
-#include "solvers/BallisticTable.hpp"
+#include "BallisticTable.hpp"
 
 #include <string>
 

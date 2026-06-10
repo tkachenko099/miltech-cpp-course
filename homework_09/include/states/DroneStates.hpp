@@ -1,6 +1,6 @@
 #pragma once
 
-#include "state/IDroneState.hpp"
+#include "interfaces/IDroneState.hpp"
 
 class StateStopped final : public IDroneState
 {

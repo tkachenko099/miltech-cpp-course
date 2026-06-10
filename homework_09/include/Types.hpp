@@ -1,49 +1,33 @@
 #pragma once
 
 #include <cmath>
-#include <cstddef>
 #include <string>
 
 constexpr float G = 9.81f;
 constexpr float EPS = 1e-6f;
-
-enum class DroneState
-{
-    Stopped = 0,
-    Accelerating = 1,
-    Decelerating = 2,
-    Turning = 3,
-    Moving = 4
-};
-
-struct BallisticResult
-{
-    float flightTime{};
-    float horizontalRange{};
-};
 
 struct Coord
 {
     float x{};
     float y{};
 
-    constexpr Coord operator+(const Coord& other) const
+    Coord operator+(const Coord& rhs) const
     {
         return {
-            x + other.x,
-            y + other.y
+            x + rhs.x,
+            y + rhs.y
         };
     }
 
-    constexpr Coord operator-(const Coord& other) const
+    Coord operator-(const Coord& rhs) const
     {
         return {
-            x - other.x,
-            y - other.y
+            x - rhs.x,
+            y - rhs.y
         };
     }
 
-    constexpr Coord operator*(float scalar) const
+    Coord operator*(float scalar) const
     {
         return {
             x * scalar,
@@ -51,7 +35,7 @@ struct Coord
         };
     }
 
-    constexpr Coord operator/(float scalar) const
+    Coord operator/(float scalar) const
     {
         return {
             x / scalar,
@@ -59,51 +43,19 @@ struct Coord
         };
     }
 
-    Coord& operator+=(const Coord& other)
+    Coord& operator+=(const Coord& rhs)
     {
-        x += other.x;
-        y += other.y;
-        return *this;
-    }
-
-    Coord& operator-=(const Coord& other)
-    {
-        x -= other.x;
-        y -= other.y;
-        return *this;
-    }
-
-    Coord& operator*=(float scalar)
-    {
-        x *= scalar;
-        y *= scalar;
-        return *this;
-    }
-
-    Coord& operator/=(float scalar)
-    {
-        x /= scalar;
-        y /= scalar;
+        x += rhs.x;
+        y += rhs.y;
         return *this;
     }
 };
 
-inline Coord operator*(
-    float scalar,
-    const Coord& coord
-)
+inline float length(const Coord& v)
 {
-    return {
-        scalar * coord.x,
-        scalar * coord.y
-    };
-}
-
-inline float length(const Coord& coord)
-{
-    return std::hypot(
-        coord.x,
-        coord.y
+    return std::sqrt(
+        v.x * v.x +
+        v.y * v.y
     );
 }
 
@@ -113,20 +65,6 @@ inline float distance2D(
 )
 {
     return length(b - a);
-}
-
-inline Coord normalize(
-    const Coord& coord
-)
-{
-    const float len = length(coord);
-
-    if (len < EPS)
-    {
-        return {0.0f, 0.0f};
-    }
-
-    return coord / len;
 }
 
 struct AmmoParams
@@ -143,18 +81,22 @@ struct DroneConfig
     Coord startPos{};
 
     float altitude{};
+
     float initialDir{};
 
     float attackSpeed{};
+
     float accelPath{};
 
-    float arrayTimeStep{};
+    float angularSpeed{};
+
+    float turnThreshold{};
+
     float simTimeStep{};
 
     float hitRadius{};
 
-    float angularSpeed{};
-    float turnThreshold{};
+    float arrayTimeStep{};
 
     std::string ammoName{};
 };
@@ -170,15 +112,14 @@ struct Drone
     Coord pos{};
 
     float z{};
-    float dir{};
 
     float speed{};
-    float attackSpeed{};
-    float acceleration{};
 
-    DroneState state{
-        DroneState::Stopped
-    };
+    float dir{};
+
+    float attackSpeed{};
+
+    float acceleration{};
 
     int currentTargetIndex{-1};
 };
@@ -190,13 +131,22 @@ struct DropPoint
     int targetIndex{-1};
 
     Coord dropPoint{};
+
     Coord predictedTarget{};
 
     float desiredDir{};
 
     float flightTime{};
+
     float horizontalRange{};
+
     float totalCost{};
+};
+
+struct BallisticResult
+{
+    float flightTime{};
+    float horizontalRange{};
 };
 
 struct SimStep
@@ -205,13 +155,13 @@ struct SimStep
 
     float direction{};
 
-    DroneState state{
-        DroneState::Stopped
-    };
+    std::string stateName{};
 
     int targetIdx{-1};
 
     Coord dropPoint{};
+
     Coord aimPoint{};
+
     Coord predictedTarget{};
 };

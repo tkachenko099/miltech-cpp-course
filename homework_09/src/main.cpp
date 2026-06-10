@@ -1,34 +1,32 @@
 #include "MissionProcessor.hpp"
-#include "Types.hpp"
 #include "config/ComponentFactory.hpp"
 
 #include <exception>
 #include <iostream>
+#include <memory>
 
 int main()
 {
     try
     {
-        auto loader =
-            createLoader(
-                LoaderType::File
-            );
+        auto loader = createLoader(
+            LoaderType::File
+        );
 
-        auto provider =
-            createProvider(
-                ProviderType::Json,
-                "data/targets.json"
-            );
+        auto provider = createProvider(
+            ProviderType::Json,
+            "data/targets.json"
+        );
 
         auto solver = createSolver(
-                SolverType::Table,
-                "data/ballistic_table.txt"
-            );
+            SolverType::Table,
+            "data/ballistic_table.txt"
+        );
 
         MissionProcessor mission{
-            *provider,
-            *solver,
-            *loader
+            std::move(provider),
+            std::move(solver),
+            std::move(loader)
         };
 
         mission.init(

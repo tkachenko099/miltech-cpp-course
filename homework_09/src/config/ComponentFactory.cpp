@@ -3,18 +3,23 @@
 #include "config/FileConfigLoader.hpp"
 #include "providers/JsonTargetProvider.hpp"
 #include "solvers/AnalyticalSolver.hpp"
+#include "solvers/TableSolver.hpp"
 
 #include <memory>
 #include <stdexcept>
 
 std::unique_ptr<IBallisticSolver> createSolver(
-    SolverType type
+    SolverType type,
+    const std::string& param
 )
 {
     switch (type)
     {
         case SolverType::Analytical:
             return std::make_unique<AnalyticalSolver>();
+
+        case SolverType::Table:
+            return std::make_unique<TableSolver>(param);
     }
 
     throw std::runtime_error("unknown solver type");
