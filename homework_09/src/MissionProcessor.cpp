@@ -29,58 +29,35 @@ void MissionProcessor::init(
     const std::string& ammoPath
 )
 {
-    loader_->load(
-        configPath,
-        ammoPath
-    );
+    loader_->load(configPath, ammoPath);
 
-    cfg_ =
-        loader_->getConfig();
+    cfg_ = loader_->getConfig();
+    ammo_ = loader_->getAmmoParams();
 
-    ammo_ =
-        loader_->getAmmoParams();
-
-    droneCtx_.position =
-        cfg_.startPos;
-
-    droneCtx_.speed =
-        0.0f;
+    droneCtx_.position = cfg_.startPos;
+    droneCtx_.speed = 0.0f;
 
     droneCtx_.acceleration =
         (cfg_.attackSpeed * cfg_.attackSpeed)
         / (2.0f * cfg_.accelPath);
 
-    droneCtx_.direction =
-        cfg_.initialDir;
+    droneCtx_.direction = cfg_.initialDir;
+    droneCtx_.desiredDir = cfg_.initialDir;
+    droneCtx_.targetDir = cfg_.initialDir;
+    droneCtx_.turnRemaining = 0.0f;
+    droneCtx_.cfg = &cfg_;
 
-    droneCtx_.desiredDir =
-        cfg_.initialDir;
+    droneState_ = std::make_unique<StateStopped>();
 
-    droneCtx_.targetDir =
-        cfg_.initialDir;
-
-    droneCtx_.turnRemaining =
-        0.0f;
-
-    droneCtx_.cfg =
-        &cfg_;
-
-    droneState_ =
-        std::make_unique<StateStopped>();
-
-    currentIdx_ =
-        0;
-
-    currentTime_ =
-        0.0f;
+    currentIdx_ = 0;
+    currentTime_ = 0.0f;
 
     steps_.clear();
 }
 
 bool MissionProcessor::hasNext() const
 {
-    return currentIdx_
-        < targets_->getTargetCount();
+    return currentIdx_ < targets_->getTargetCount();
 }
 
 DropPoint MissionProcessor::step()
@@ -99,7 +76,7 @@ DropPoint MissionProcessor::step()
             cfg_.simTimeStep
         );
 
-    DropPoint result =
+    DropPoint preliminary =
         solver_->solve(
             droneCtx_.position,
             cfg_.altitude,
@@ -109,28 +86,54 @@ DropPoint MissionProcessor::step()
             ammo_
         );
 
+    preliminary.targetIndex =
+        currentIdx_;
+
+    if (!preliminary.valid)
+    {
+        ++currentIdx_;
+        currentTime_ += cfg_.simTimeStep;
+
+        return preliminary;
+    }
+
+    const Coord predictedTarget =
+        target.pos
+        + target.vel * preliminary.flightTime;
+
+    DropPoint result =
+        solver_->solve(
+            droneCtx_.position,
+            cfg_.altitude,
+            predictedTarget,
+            cfg_.attackSpeed,
+            cfg_.accelPath,
+            ammo_
+        );
+
     result.targetIndex =
         currentIdx_;
+
+    result.predictedTarget =
+        predictedTarget;
 
     if (!result.valid)
     {
         ++currentIdx_;
         currentTime_ += cfg_.simTimeStep;
+
         return result;
     }
 
     const Coord toDrop =
-        result.dropPoint - droneCtx_.position;
+        result.dropPoint
+        - droneCtx_.position;
 
     result.desiredDir =
         std::atan2(
             toDrop.y,
             toDrop.x
         );
-
-    result.predictedTarget =
-        target.pos
-        + target.vel * result.flightTime;
 
     result.totalCost =
         distance2D(
@@ -140,8 +143,6 @@ DropPoint MissionProcessor::step()
 
     droneCtx_.desiredDir =
         result.desiredDir;
-
-    saveStep(result);
 
     auto nextState =
         droneState_->execute(
@@ -154,13 +155,14 @@ DropPoint MissionProcessor::step()
             std::move(nextState);
     }
 
-    const float distanceToDrop =
-        distance2D(
+    saveStep(result);
+
+    constexpr float dropRadius = 1.0f;
+
+    if (distance2D(
             droneCtx_.position,
             result.dropPoint
-        );
-
-    if (distanceToDrop <= cfg_.hitRadius)
+        ) <= dropRadius)
     {
         ++currentIdx_;
     }
@@ -173,39 +175,23 @@ DropPoint MissionProcessor::step()
 
 void MissionProcessor::reset()
 {
-    droneCtx_.position =
-        cfg_.startPos;
-
-    droneCtx_.speed =
-        0.0f;
+    droneCtx_.position = cfg_.startPos;
+    droneCtx_.speed = 0.0f;
 
     droneCtx_.acceleration =
         (cfg_.attackSpeed * cfg_.attackSpeed)
         / (2.0f * cfg_.accelPath);
 
-    droneCtx_.direction =
-        cfg_.initialDir;
+    droneCtx_.direction = cfg_.initialDir;
+    droneCtx_.desiredDir = cfg_.initialDir;
+    droneCtx_.targetDir = cfg_.initialDir;
+    droneCtx_.turnRemaining = 0.0f;
+    droneCtx_.cfg = &cfg_;
 
-    droneCtx_.desiredDir =
-        cfg_.initialDir;
+    droneState_ = std::make_unique<StateStopped>();
 
-    droneCtx_.targetDir =
-        cfg_.initialDir;
-
-    droneCtx_.turnRemaining =
-        0.0f;
-
-    droneCtx_.cfg =
-        &cfg_;
-
-    droneState_ =
-        std::make_unique<StateStopped>();
-
-    currentIdx_ =
-        0;
-
-    currentTime_ =
-        0.0f;
+    currentIdx_ = 0;
+    currentTime_ = 0.0f;
 
     steps_.clear();
 }
@@ -248,8 +234,8 @@ void MissionProcessor::saveStep(
     step.direction =
         droneCtx_.direction;
 
-    step.stateName =
-        droneState_->name();
+    step.state =
+        droneState_->code();
 
     step.targetIdx =
         result.targetIndex;
@@ -259,19 +245,10 @@ void MissionProcessor::saveStep(
 
     step.aimPoint =
         droneCtx_.position
-        + dirVec
-          * result.horizontalRange;
+        + dirVec * result.horizontalRange;
 
     step.predictedTarget =
         result.predictedTarget;
 
-    step.flightTime =
-        result.flightTime;
-
-    step.horizontalRange =
-        result.horizontalRange;
-
-    steps_.push_back(
-        step
-    );
+    steps_.push_back(step);
 }

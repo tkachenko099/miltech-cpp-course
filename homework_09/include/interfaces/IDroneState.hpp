@@ -13,4 +13,6 @@ public:
     execute(DroneContext& ctx) = 0;
 
     virtual const char* name() const = 0;
+
+    virtual int code() const = 0;
 };

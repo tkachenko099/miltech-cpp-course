@@ -18,7 +18,7 @@ add_executable(homework_09
 
     src/config/FileConfigLoader.cpp
     src/config/ComponentFactory.cpp
-
+    src/SimulationWriter.cpp
     src/states/DroneStates.cpp
 )
 

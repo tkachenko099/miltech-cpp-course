@@ -5,6 +5,19 @@
 #include <fstream>
 #include <stdexcept>
 
+namespace
+{
+nlohmann::json coordToJson(
+    const Coord& coord
+)
+{
+    return {
+        {"x", coord.x},
+        {"y", coord.y}
+    };
+}
+}
+
 void SimulationWriter::writeJson(
     const std::string& filename,
     const std::vector<SimStep>& steps
@@ -12,45 +25,36 @@ void SimulationWriter::writeJson(
 {
     nlohmann::json out;
 
-    out["total_steps"] = steps.size();
-    out["steps"] = nlohmann::json::array();
+    out["totalSteps"] =
+        steps.size();
+
+    out["steps"] =
+        nlohmann::json::array();
 
     for (const auto& step : steps)
     {
         nlohmann::json item;
 
-        item["target"] =
-            step.targetIdx;
+        item["position"] =
+            coordToJson(step.pos);
 
-        item["drop"] = {
-            {"x", step.dropPoint.x},
-            {"y", step.dropPoint.y}
-        };
-
-        item["flight_time"] =
-            step.flightTime;
-
-        item["range"] =
-            step.horizontalRange;
+        item["direction"] =
+            step.direction;
 
         item["state"] =
-            step.stateName;
+            step.state;
 
-        item["drone"] = {
-            {"x", step.pos.x},
-            {"y", step.pos.y},
-            {"direction", step.direction}
-        };
+        item["targetIndex"] =
+            step.targetIdx;
 
-        item["aim_point"] = {
-            {"x", step.aimPoint.x},
-            {"y", step.aimPoint.y}
-        };
+        item["dropPoint"] =
+            coordToJson(step.dropPoint);
 
-        item["predicted_target"] = {
-            {"x", step.predictedTarget.x},
-            {"y", step.predictedTarget.y}
-        };
+        item["aimPoint"] =
+            coordToJson(step.aimPoint);
+
+        item["predictedTarget"] =
+            coordToJson(step.predictedTarget);
 
         out["steps"].push_back(item);
     }

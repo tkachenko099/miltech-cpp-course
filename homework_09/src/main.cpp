@@ -53,20 +53,34 @@ int main()
                 continue;
             }
 
-            std::cout
-                << "target "
-                << result.targetIndex
-                << ": drop=("
-                << result.dropPoint.x
-                << ", "
-                << result.dropPoint.y
-                << ") "
-                << "flight_time="
-                << result.flightTime
-                << " "
-                << "range="
-                << result.horizontalRange
-                << '\n';
+            if (!mission.getSteps().empty())
+            {
+                const SimStep& lastStep =
+                    mission.getSteps().back();
+
+                std::cout
+                    << "target "
+                    << result.targetIndex
+                    << ": drone=("
+                    << lastStep.pos.x
+                    << ", "
+                    << lastStep.pos.y
+                    << ") "
+                    << "state="
+                    << lastStep.state
+                    << " "
+                    << "drop=("
+                    << result.dropPoint.x
+                    << ", "
+                    << result.dropPoint.y
+                    << ") "
+                    << "flight_time="
+                    << result.flightTime
+                    << " "
+                    << "range="
+                    << result.horizontalRange
+                    << '\n';
+            }
         }
 
         SimulationWriter::writeJson(
