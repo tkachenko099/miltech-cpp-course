@@ -1,4 +1,5 @@
 #include "MissionProcessor.hpp"
+#include "SimulationWriter.hpp"
 #include "config/ComponentFactory.hpp"
 
 #include <exception>
@@ -9,19 +10,22 @@ int main()
 {
     try
     {
-        auto loader = createLoader(
-            LoaderType::File
-        );
+        auto loader =
+            createLoader(
+                LoaderType::File
+            );
 
-        auto provider = createProvider(
-            ProviderType::Json,
-            "data/targets.json"
-        );
+        auto provider =
+            createProvider(
+                ProviderType::Json,
+                "data/targets.json"
+            );
 
-        auto solver = createSolver(
-            SolverType::Table,
-            "data/ballistic_table.txt"
-        );
+        auto solver =
+            createSolver(
+                SolverType::Table,
+                "data/ballistic_table.txt"
+            );
 
         MissionProcessor mission{
             std::move(provider),
@@ -64,6 +68,11 @@ int main()
                 << result.horizontalRange
                 << '\n';
         }
+
+        SimulationWriter::writeJson(
+            "simulation.json",
+            mission.getSteps()
+        );
 
         return 0;
     }
