@@ -1,0 +1,5 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configurePreset": "ucrt64-debug",
+  "cmake.buildPreset": "build-ucrt64-debug"
+}
