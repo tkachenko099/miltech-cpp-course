@@ -16,6 +16,12 @@ enum class DroneState
     Moving = 4
 };
 
+struct BallisticResult
+{
+    float flightTime{};
+    float horizontalRange{};
+};
+
 struct Coord
 {
     float x{};

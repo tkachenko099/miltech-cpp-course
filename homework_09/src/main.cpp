@@ -20,9 +20,9 @@ int main()
                 "data/targets.json"
             );
 
-        auto solver =
-            createSolver(
-                SolverType::Analytical
+        auto solver = createSolver(
+                SolverType::Table,
+                "data/ballistic_table.txt"
             );
 
         MissionProcessor mission{
