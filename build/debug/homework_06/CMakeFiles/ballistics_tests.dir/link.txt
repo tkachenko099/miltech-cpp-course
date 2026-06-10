@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/ballistics_tests.dir/tests/ballistics_tests.cpp.o -o ballistics_tests  libballistics.a ../lib/libgtest_main.a ../lib/libgtest.a 

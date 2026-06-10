@@ -1,5 +1,0 @@
-if(EXISTS "/workspaces/miltech-cpp-course/build/debug/homework_06/ballistics_tests[1]_tests.cmake")
-  include("/workspaces/miltech-cpp-course/build/debug/homework_06/ballistics_tests[1]_tests.cmake")
-else()
-  add_test(ballistics_tests_NOT_BUILT ballistics_tests_NOT_BUILT)
-endif()

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libtelemetry.a CMakeFiles/telemetry.dir/src/telemetry.cpp.o
-/usr/bin/ranlib libtelemetry.a

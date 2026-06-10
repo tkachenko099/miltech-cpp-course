@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/telemetry_check.dir/src/main.cpp.o -o telemetry_check  libtelemetry.a 
