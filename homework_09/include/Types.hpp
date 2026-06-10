@@ -160,8 +160,9 @@ struct SimStep
     int targetIdx{-1};
 
     Coord dropPoint{};
-
     Coord aimPoint{};
-
     Coord predictedTarget{};
+
+    float flightTime{};
+    float horizontalRange{};
 };

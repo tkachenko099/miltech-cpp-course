@@ -112,47 +112,58 @@ DropPoint MissionProcessor::step()
     result.targetIndex =
         currentIdx_;
 
-    if (result.valid)
+    if (!result.valid)
     {
-        const Coord toDrop =
-            result.dropPoint
-            - droneCtx_.position;
-
-        result.desiredDir =
-            std::atan2(
-                toDrop.y,
-                toDrop.x
-            );
-
-        result.predictedTarget =
-            target.pos
-            + target.vel
-              * result.flightTime;
-
-        result.totalCost =
-            distance2D(
-                droneCtx_.position,
-                result.dropPoint
-            );
-
-        droneCtx_.desiredDir =
-            result.desiredDir;
-
-        saveStep(result);
-
-        auto nextState =
-            droneState_->execute(
-                droneCtx_
-            );
-
-        if (nextState)
-        {
-            droneState_ =
-                std::move(nextState);
-        }
+        ++currentIdx_;
+        currentTime_ += cfg_.simTimeStep;
+        return result;
     }
 
-    ++currentIdx_;
+    const Coord toDrop =
+        result.dropPoint - droneCtx_.position;
+
+    result.desiredDir =
+        std::atan2(
+            toDrop.y,
+            toDrop.x
+        );
+
+    result.predictedTarget =
+        target.pos
+        + target.vel * result.flightTime;
+
+    result.totalCost =
+        distance2D(
+            droneCtx_.position,
+            result.dropPoint
+        );
+
+    droneCtx_.desiredDir =
+        result.desiredDir;
+
+    saveStep(result);
+
+    auto nextState =
+        droneState_->execute(
+            droneCtx_
+        );
+
+    if (nextState)
+    {
+        droneState_ =
+            std::move(nextState);
+    }
+
+    const float distanceToDrop =
+        distance2D(
+            droneCtx_.position,
+            result.dropPoint
+        );
+
+    if (distanceToDrop <= cfg_.hitRadius)
+    {
+        ++currentIdx_;
+    }
 
     currentTime_ +=
         cfg_.simTimeStep;
