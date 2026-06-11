@@ -37,6 +37,12 @@ public:
     const std::vector<SimStep>& getSteps() const;
 
 private:
+    int selectTargetByMinArrivalTime();
+
+    float estimateArrivalTime(
+        const Coord& dropPoint
+    ) const;
+
     void saveStep(
         const DropPoint& result
     );
@@ -52,8 +58,9 @@ private:
     DroneConfig cfg_{};
     AmmoParams ammo_{};
 
-    int currentIdx_{};
+    int currentIdx_{-1};
     float currentTime_{};
 
+    std::vector<bool> processedTargets_{};
     std::vector<SimStep> steps_{};
 };

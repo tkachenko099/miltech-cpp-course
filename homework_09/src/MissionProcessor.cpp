@@ -3,8 +3,27 @@
 #include "states/DroneStates.hpp"
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <utility>
+
+namespace
+{
+float normalizeAngle(float angle)
+{
+    while (angle > M_PI)
+    {
+        angle -= 2.0f * M_PI;
+    }
+
+    while (angle < -M_PI)
+    {
+        angle += 2.0f * M_PI;
+    }
+
+    return angle;
+}
+}
 
 MissionProcessor::MissionProcessor(
     std::unique_ptr<ITargetProvider> targets,
@@ -49,15 +68,28 @@ void MissionProcessor::init(
 
     droneState_ = std::make_unique<StateStopped>();
 
-    currentIdx_ = 0;
+    currentIdx_ = -1;
     currentTime_ = 0.0f;
+
+    processedTargets_.assign(
+        targets_->getTargetCount(),
+        false
+    );
 
     steps_.clear();
 }
 
 bool MissionProcessor::hasNext() const
 {
-    return currentIdx_ < targets_->getTargetCount();
+    for (bool processed : processedTargets_)
+    {
+        if (!processed)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 DropPoint MissionProcessor::step()
@@ -68,6 +100,19 @@ DropPoint MissionProcessor::step()
             "no more targets"
         );
     }
+
+    const int selectedTarget =
+        selectTargetByMinArrivalTime();
+
+    if (selectedTarget < 0)
+    {
+        throw std::runtime_error(
+            "no reachable targets"
+        );
+    }
+
+    currentIdx_ =
+        selectedTarget;
 
     const TargetState target =
         targets_->getTarget(
@@ -91,8 +136,11 @@ DropPoint MissionProcessor::step()
 
     if (!preliminary.valid)
     {
-        ++currentIdx_;
-        currentTime_ += cfg_.simTimeStep;
+        processedTargets_[currentIdx_] =
+            true;
+
+        currentTime_ +=
+            cfg_.simTimeStep;
 
         return preliminary;
     }
@@ -119,8 +167,11 @@ DropPoint MissionProcessor::step()
 
     if (!result.valid)
     {
-        ++currentIdx_;
-        currentTime_ += cfg_.simTimeStep;
+        processedTargets_[currentIdx_] =
+            true;
+
+        currentTime_ +=
+            cfg_.simTimeStep;
 
         return result;
     }
@@ -157,14 +208,16 @@ DropPoint MissionProcessor::step()
 
     saveStep(result);
 
-    constexpr float dropRadius = 1.0f;
+    constexpr float dropRadius =
+        1.0f;
 
     if (distance2D(
             droneCtx_.position,
             result.dropPoint
         ) <= dropRadius)
     {
-        ++currentIdx_;
+        processedTargets_[currentIdx_] =
+            true;
     }
 
     currentTime_ +=
@@ -188,10 +241,19 @@ void MissionProcessor::reset()
     droneCtx_.turnRemaining = 0.0f;
     droneCtx_.cfg = &cfg_;
 
-    droneState_ = std::make_unique<StateStopped>();
+    droneState_ =
+        std::make_unique<StateStopped>();
 
-    currentIdx_ = 0;
-    currentTime_ = 0.0f;
+    currentIdx_ =
+        -1;
+
+    currentTime_ =
+        0.0f;
+
+    processedTargets_.assign(
+        targets_->getTargetCount(),
+        false
+    );
 
     steps_.clear();
 }
@@ -215,6 +277,117 @@ const std::vector<SimStep>&
 MissionProcessor::getSteps() const
 {
     return steps_;
+}
+
+int MissionProcessor::selectTargetByMinArrivalTime()
+{
+    float bestTime =
+        std::numeric_limits<float>::max();
+
+    int bestIndex =
+        -1;
+
+    for (int i = 0;
+         i < targets_->getTargetCount();
+         ++i)
+    {
+        if (processedTargets_[i])
+        {
+            continue;
+        }
+
+        const TargetState target =
+            targets_->getTarget(
+                i,
+                currentTime_,
+                cfg_.simTimeStep
+            );
+
+        DropPoint preliminary =
+            solver_->solve(
+                droneCtx_.position,
+                cfg_.altitude,
+                target.pos,
+                cfg_.attackSpeed,
+                cfg_.accelPath,
+                ammo_
+            );
+
+        if (!preliminary.valid)
+        {
+            continue;
+        }
+
+        const Coord predictedTarget =
+            target.pos
+            + target.vel
+              * preliminary.flightTime;
+
+        DropPoint result =
+            solver_->solve(
+                droneCtx_.position,
+                cfg_.altitude,
+                predictedTarget,
+                cfg_.attackSpeed,
+                cfg_.accelPath,
+                ammo_
+            );
+
+        if (!result.valid)
+        {
+            continue;
+        }
+
+        const float arrivalTime =
+            estimateArrivalTime(
+                result.dropPoint
+            );
+
+        if (arrivalTime < bestTime)
+        {
+            bestTime =
+                arrivalTime;
+
+            bestIndex =
+                i;
+        }
+    }
+
+    return bestIndex;
+}
+
+float MissionProcessor::estimateArrivalTime(
+    const Coord& dropPoint
+) const
+{
+    const Coord toDrop =
+        dropPoint
+        - droneCtx_.position;
+
+    const float distance =
+        length(toDrop);
+
+    const float desiredDir =
+        std::atan2(
+            toDrop.y,
+            toDrop.x
+        );
+
+    const float angleDelta =
+        normalizeAngle(
+            desiredDir
+            - droneCtx_.direction
+        );
+
+    const float turnTime =
+        std::fabs(angleDelta)
+        / cfg_.angularSpeed;
+
+    const float moveTime =
+        distance
+        / cfg_.attackSpeed;
+
+    return turnTime + moveTime;
 }
 
 void MissionProcessor::saveStep(
